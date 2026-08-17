@@ -31,18 +31,24 @@ jobs:
       run: |
         cd app
         npm install
+        npm install -g @capacitor/cli @capacitor/core
 
     - name: Prepare web assets
       run: |
-        mkdir -p www
-        cp app/index.html www/
-        cp app/capacitor.config.json www/
+        mkdir -p app/www
+        cp app/index.html app/www/
+        cp app/capacitor.config.json app/www/
+
+    - name: Initialize Capacitor
+      run: |
+        cd app
+        npx cap init "DSH Mobile" "com.deepseek.harness.mobile" --web-dir www
 
     - name: Sync Capacitor
       run: |
         cd app
-        npx cap init "DSH Mobile" "com.deepseek.harness.mobile" --web-dir www --android
-        npx cap sync android
+        npx cap add android
+        npx cap sync
 
     - name: Build APK
       run: |
