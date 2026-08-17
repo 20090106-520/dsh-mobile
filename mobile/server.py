@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-DSH Mobile Bridge - 手机端连接电脑端 DSH
-PWA 方案：添加到手机主屏幕，像原生 App 一样使用
+DSH Mobile Bridge - 支持内网穿透的服务器
+使用 Cloudflare Tunnel 或 ngrok 实现公网访问
 """
 
 import asyncio
@@ -11,19 +11,22 @@ import aiohttp
 from aiohttp import web
 from datetime import datetime
 import os
+import subprocess
+import sys
+
+# 配置
+PORT = 3081
+WS_PORT = 3081
+DSH_API_URL = os.environ.get("DSH_API_URL", "http://127.0.0.1:3080")
 
 # 存储客户端连接
 clients = {}
-DSH_API_URL = os.environ.get("DSH_API_URL", "http://127.0.0.1:3080")
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 async def forward_to_dsh(message):
     """将消息转发到 DSH 桌面端 API"""
     try:
         async with aiohttp.ClientSession() as session:
             payload = {"message": message, "source": "mobile"}
-            
-            # 尝试 DSH API
             async with session.post(
                 f"{DSH_API_URL}/api/message",
                 json=payload,
@@ -102,26 +105,8 @@ async def broadcast(message):
             del clients[cid]
 
 async def index_handler(request):
-    """提供 PWA 页面"""
-    return web.FileResponse(os.path.join(BASE_DIR, "index.html"))
-
-async def manifest_handler(request):
-    """PWA manifest"""
-    return web.FileResponse(os.path.join(BASE_DIR, "manifest.json"), 
-                           content_type="application/manifest+json")
-
-async def sw_handler(request):
-    """Service Worker"""
-    return web.FileResponse(os.path.join(BASE_DIR, "sw.js"),
-                           content_type="application/javascript")
-
-async def icon_handler(request):
-    """图标"""
-    size = request.match_info.get('size', '192')
-    path = os.path.join(BASE_DIR, "icons", f"icon-{size}.png")
-    if os.path.exists(path):
-        return web.FileResponse(path)
-    return web.Response(status=404)
+    """提供手机端页面"""
+    return web.FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))
 
 async def health_handler(request):
     """健康检查"""
@@ -131,46 +116,84 @@ async def health_handler(request):
         "dsh_url": DSH_API_URL
     })
 
-def main():
-    http_port = int(os.environ.get("MOBILE_HTTP_PORT", "8080"))
-    ws_port = int(os.environ.get("MOBILE_WS_PORT", "3081"))
+def setup_tunnel():
+    """设置内网穿透"""
+    print("=" * 50)
+    print("  DSH Mobile Bridge - 内网穿透配置")
+    print("=" * 50)
+    print()
     
+    # 检查是否有 cloudflared
+    try:
+        result = subprocess.run(["cloudflared", "--version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ 检测到 Cloudflare Tunnel")
+            print()
+            print("请运行以下命令启动隧道:")
+            print(f"  cloudflared tunnel --url http://localhost:{PORT}")
+            print()
+            print("或者使用 ngrok:")
+            print(f"  ngrok http {PORT}")
+            return
+    except:
+        pass
+    
+    # 检查 ngrok
+    try:
+        result = subprocess.run(["ngrok", "version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ 检测到 ngrok")
+            print()
+            print("请运行以下命令启动隧道:")
+            print(f"  ngrok http {PORT}")
+            return
+    except:
+        pass
+    
+    print("⚠️ 未检测到内网穿透工具")
+    print()
+    print("推荐安装 (二选一):")
+    print()
+    print("方案一: Cloudflare Tunnel (免费，无需注册)")
+    print("  安装: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/download/")
+    print(f"  启动: cloudflared tunnel --url http://localhost:{PORT}")
+    print()
+    print("方案二: ngrok (免费，需要注册)")
+    print("  安装: https://ngrok.com/download")
+    print(f"  启动: ngrok http {PORT}")
+    print()
+
+async def main():
+    # 设置内网穿透
+    setup_tunnel()
+    
+    print()
     print("=" * 50)
-    print("  DSH Mobile Bridge (PWA)")
+    print("  DSH Mobile Bridge")
     print("=" * 50)
     print()
-    print(f"  HTTP:    http://0.0.0.0:{http_port}")
-    print(f"  WS:      ws://0.0.0.0:{ws_port}")
+    print(f"  本地 HTTP:    http://localhost:{PORT}")
+    print(f"  本地 WebSocket: ws://localhost:{WS_PORT}")
     print()
-    print("  手机浏览器打开 HTTP 地址")
-    print("  添加至主屏幕即可安装")
-    print()
-    print("  按 Ctrl+C 停止")
+    print("  请按 Ctrl+C 停止服务器")
     print("=" * 50)
     print()
     
     # 启动 WebSocket 服务器
-    ws_server = websockets.serve(handle_client, "0.0.0.0", ws_port)
+    ws_server = websockets.serve(handle_client, "0.0.0.0", WS_PORT)
     
     # 启动 HTTP 服务器
     app = web.Application()
     app.router.add_get("/", index_handler)
     app.router.add_get("/index.html", index_handler)
-    app.router.add_get("/manifest.json", manifest_handler)
-    app.router.add_get("/sw.js", sw_handler)
-    app.router.add_get("/icon-{size}.png", icon_handler)
     app.router.add_get("/health", health_handler)
     
     runner = web.AppRunner(app)
     
     async def start_servers():
         await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", http_port)
+        site = web.TCPSite(runner, "0.0.0.0", PORT)
         await site.start()
-        
-        print(f"HTTP 服务器已启动: http://0.0.0.0:{http_port}")
-        print(f"WebSocket 服务器已启动: ws://0.0.0.0:{ws_port}")
-        print()
         
         # 获取本机 IP
         import socket
@@ -183,8 +206,13 @@ def main():
         finally:
             s.close()
         
-        print(f"局域网访问: http://{local_ip}:{http_port}")
-        print(f"手机端打开此地址后添加到主屏幕")
+        print(f"HTTP 服务器已启动: http://0.0.0.0:{PORT}")
+        print(f"WebSocket 服务器已启动: ws://0.0.0.0:{WS_PORT}")
+        print(f"局域网访问: http://{local_ip}:{PORT}")
+        print()
+        print("内网穿透地址 (启动隧道后显示):")
+        print("  请访问 https://dashboard.ngrok.com/status/tunnels (ngrok)")
+        print("  或 https://dash.cloudflare.com/one/tunnels (Cloudflare)")
         print()
         
         await asyncio.Future()
