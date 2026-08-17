@@ -8,5 +8,11 @@
       "scheme": "dshmobile",
       "enableHostedView": true
     }
+  },
+  "appId": "com.deepseek.harness.mobile",
+  "appName": "DSH Mobile",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
   }
 }

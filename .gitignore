@@ -5,7 +5,11 @@ Thumbs.db
 .idea/
 *.iml
 local.properties
-app/android/gradle/
-app/android/.gradle/
-app/android/build/
+app/android/
 app/www/
+android/.gradle/
+android/app/build/
+android/gradle/wrapper/gradle-wrapper.jar
+android/package-lock.json
+android/package.json
+DSH-Mobile.apk

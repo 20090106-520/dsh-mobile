@@ -70,17 +70,29 @@ goto fail
 if not "%OS%" == "Windows_NT" goto win9xME_args
 
 :win9xME_args
-echo Slurp is not supported.
-goto end
+@rem Slurp the command line arguments.
+set CMD_LINE_ARGS=
+set _SKIP=2
 
-:win9xME_args
-@rem Slurp
+:win9xME_args_slurp
+if "x%~1" == "x" goto execute
+
 set CMD_LINE_ARGS=%*
+
+:execute
+@rem Setup the command line
+
+@rem Execute Gradle
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" org.gradle.wrapper.GradleWrapperMain %CMD_LINE_ARGS%
+
 :end
 @rem End local scope for the variables with windows NT shell
 if "%ERRORLEVEL%"=="0" goto mainEnd
 
-:failingExitCode
+:fail
+rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of
+rem the _cmd.exe /c_ return code!
+if  not "" == "%GRADLE_EXIT_CONSOLE%" exit 1
 exit /b 1
 
 :mainEnd

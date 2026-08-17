@@ -241,7 +241,6 @@ class MessageAdapter(
                 tvMessage.text = message.content
                 tvMessage.setTextColor(android.graphics.Color.parseColor("#888888"))
                 cardView.setCardBackgroundColor(android.graphics.Color.TRANSPARENT)
-                cardView.setStrokeWidth(0)
             } else {
                 tvMessage.text = message.content
                 tvMessage.setTextColor(
@@ -252,7 +251,6 @@ class MessageAdapter(
                     if (message.isUser) android.graphics.Color.parseColor("#E94560")
                     else android.graphics.Color.parseColor("#1A1A2E")
                 )
-                cardView.setStrokeWidth(0)
             }
         }
     }
