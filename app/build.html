@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSH Mobile - APK 构建</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1a;
+            color: #eee;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 { color: #e94560; text-align: center; margin-bottom: 20px; }
+        .card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .card h2 { color: #4ecca3; margin-bottom: 15px; font-size: 16px; }
+        .card p { color: #888; font-size: 13px; margin-bottom: 10px; }
+        .step { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 10px;
+            background: #0f0f1a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .step-num {
+            width: 24px;
+            height: 24px;
+            background: #e94560;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        a {
+            display: block;
+            background: #4ecca3;
+            color: #0f0f1a;
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        a:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: #333;
+            color: #eee;
+        }
+        code {
+            background: #0f0f1a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 DSH Mobile</h1>
+    
+    <div class="card">
+        <h2>方法一：在线构建 APK（推荐）</h2>
+        <p>使用在线服务一键生成 APK，无需安装任何软件</p>
+        
+        <div class="step">
+            <div class="step-num">1</div>
+            <span>访问在线构建服务</span>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <span>上传我们的 Web 应用</span>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <span>下载 APK 安装包</span>
+        </div>
+        
+        <a href="https://www.appilane.com/" target="_blank">打开 Appilane 在线构建</a>
+        <a href="https://www.nativehtml.com/" target="_blank" class="btn-secondary">或者使用 NativeHTML</a>
+    </div>
+    
+    <div class="card">
+        <h2>方法二：使用 Android Studio</h2>
+        <p>需要安装 Node.js、JDK 和 Android Studio</p>
+        
+        <div class="step">
+            <div class="step-num">1</div>
+            <span>安装 <a href="https://nodejs.org/" target="_blank" style="color:#4ecca3">Node.js</a></span>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <span>安装 <a href="https://adoptium.net/" target="_blank" style="color:#4ecca3">JDK 17+</a></span>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <span>安装 <a href="https://developer.android.com/studio" target="_blank" style="color:#4ecca3">Android Studio</a></span>
+        </div>
+        <div class="step">
+            <div class="step-num">4</div>
+            <span>运行 <code>build_apk.bat</code></span>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>方法三：使用 Capacitor Cloud Build</h2>
+        <p>使用 Ionic 的在线构建服务</p>
+        
+        <div class="step">
+            <div class="step-num">1</div>
+            <span>访问 <a href="https://capacitorjs.com/cloud-build" target="_blank" style="color:#4ecca3">Capacitor Cloud Build</a></span>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <span>上传项目或连接 GitHub</span>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <span>在线构建 APK</span>
+        </div>
+        
+        <a href="https://capacitorjs.com/cloud-build" target="_blank">前往 Cloud Build</a>
+    </div>
+    
+    <div class="card">
+        <h2>使用方法</h2>
+        <p>构建完成后，安装 APK 到手机：</p>
+        
+        <div class="step">
+            <div class="step-num">1</div>
+            <span>确保手机和电脑在同一 WiFi</span>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <span>电脑上运行 <code>mobile/server.py</code></span>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <span>打开手机 App，配置 WebSocket 地址</span>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>获取电脑 IP</h2>
+        <p>在电脑上运行：</p>
+        <code>ipconfig</code>
+        <p style="margin-top:10px">找到 <code>IPv4 地址</code>，例如 <code>192.168.1.100</code></p>
+    </div>
+</body>
+</html>

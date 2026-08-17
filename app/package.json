@@ -1,0 +1,22 @@
+{
+  "name": "dsh-mobile",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness Mobile Client",
+  "scripts": {
+    "build": "capacitor build android",
+    "open": "capacitor open android"
+  },
+  "dependencies": {
+    "@capacitor/core": "^5.0.0",
+    "@capacitor/cli": "^5.0.0",
+    "@capacitor/android": "^5.0.0"
+  },
+  "capacitor": {
+    "app": {
+      "id": "com.deepseek.harness.mobile",
+      "name": "DSH Mobile",
+      "webDir": "www",
+      "backgroundColor": "#0f0f1a"
+    }
+  }
+}

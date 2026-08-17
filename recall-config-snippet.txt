@@ -1,0 +1,12 @@
+﻿
+# 记忆通知设置 - 添加到设置面板
+- insert:
+    - id: recall-settings
+      name: 'dsh-recall-settings'
+      config:
+        enabled: true
+        notifyOnRecall: true
+        notifyPosition: settings
+        showInSidebar: false
+        notifySound: true
+        notifyDuration: 5000

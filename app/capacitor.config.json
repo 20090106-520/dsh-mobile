@@ -1,0 +1,12 @@
+{
+  "app": {
+    "id": "com.deepseek.harness.mobile",
+    "name": "DSH Mobile",
+    "webDir": "www",
+    "backgroundColor": "#0f0f1a",
+    "android": {
+      "scheme": "dshmobile",
+      "enableHostedView": true
+    }
+  }
+}

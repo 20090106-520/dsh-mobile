@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+*.iml
+local.properties
+app/android/gradle/
+app/android/.gradle/
+app/android/build/
+app/www/

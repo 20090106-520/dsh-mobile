@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f0f1a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>DSH Mobile</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --bg: #0f0f1a;
+            --surface: #1a1a2e;
+            --primary: #e94560;
+            --text: #eee;
+            --text2: #888;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .header {
+            background: var(--surface);
+            padding: calc(12px + var(--safe-top)) 16px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #0f3460;
+            flex-shrink: 0;
+        }
+        .header h1 { font-size: 17px; font-weight: 600; }
+        .header .subtitle { font-size: 11px; color: var(--text2); }
+        .header-actions { display: flex; gap: 12px; }
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .msg.user {
+            align-self: flex-end;
+            background: var(--primary);
+            border-bottom-right-radius: 6px;
+        }
+        .msg.ai {
+            align-self: flex-start;
+            background: var(--surface);
+            border-bottom-left-radius: 6px;
+        }
+        .msg.system {
+            align-self: center;
+            background: transparent;
+            color: var(--text2);
+            font-size: 11px;
+            padding: 4px 10px;
+        }
+        
+        .input-area {
+            background: var(--surface);
+            padding: 10px 12px calc(10px + var(--safe-bottom));
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+        .input-area textarea {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid #0f3460;
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 15px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            min-height: 44px;
+            line-height: 1.4;
+        }
+        .input-area textarea:focus { border-color: var(--primary); }
+        .send-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            padding: calc(20px + var(--safe-top)) 20px calc(20px + var(--safe-bottom));
+        }
+        .panel.show { display: flex; }
+        .panel h2 { color: var(--primary); margin-bottom: 20px; font-size: 18px; }
+        .panel input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid #0f3460;
+            color: var(--text);
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            margin-bottom: 12px;
+        }
+        .panel button {
+            width: 100%;
+            background: #4ecca3;
+            border: none;
+            color: #0f0f1a;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .panel .cancel { background: #333; color: var(--text); }
+        
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 200;
+        }
+        .toast.show { opacity: 1; }
+        
+        .install-banner {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            display: none;
+            z-index: 150;
+            box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+        }
+        .install-banner.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🤖 DSH Mobile</h1>
+            <div class="subtitle" id="status">点击 ⚙️ 配置连接</div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" id="configBtn">⚙️</button>
+        </div>
+    </div>
+    
+    <div class="chat" id="chat">
+        <div class="msg system">点击下方 ⚙️ 按钮配置连接</div>
+    </div>
+    
+    <div class="input-area" id="inputArea" style="display:none;">
+        <textarea id="msgInput" placeholder="输入消息..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+    
+    <div class="panel" id="configPanel">
+        <h2>连接配置</h2>
+        <input type="text" id="serverUrl" placeholder="WebSocket 地址" value="ws://192.168.1.100:3081">
+        <input type="text" id="sessionId" placeholder="Session ID (可选)">
+        <button id="connectBtn">🔗 连接</button>
+        <button class="cancel" id="cancelBtn">取消</button>
+        <p style="color:#555;font-size:11px;margin-top:15px;text-align:center;">
+            确保手机和电脑在同一 WiFi<br>
+            电脑端需要运行 server.py
+        </p>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    <div class="install-banner" id="installBanner">
+        点击添加至主屏幕，获得原生体验
+    </div>
+
+    <script>
+        let ws = null;
+        let deferredPrompt = null;
+        
+        const chat = document.getElementById('chat');
+        const status = document.getElementById('status');
+        const inputArea = document.getElementById('inputArea');
+        const configBtn = document.getElementById('configBtn');
+        const configPanel = document.getElementById('configPanel');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const connectBtn = document.getElementById('connectBtn');
+        const serverUrl = document.getElementById('serverUrl');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const toast = document.getElementById('toast');
+        const installBanner = document.getElementById('installBanner');
+        
+        // PWA 安装
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            setTimeout(() => installBanner.classList.add('show'), 2000);
+        });
+        
+        installBanner.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                toast.show('已安装到主屏幕！');
+            }
+            deferredPrompt = null;
+            installBanner.classList.remove('show');
+        });
+        
+        // 配置面板
+        configBtn.addEventListener('click', () => configPanel.classList.add('show'));
+        cancelBtn.addEventListener('click', () => configPanel.classList.remove('show'));
+        
+        // 连接
+        connectBtn.addEventListener('click', () => {
+            const url = serverUrl.value.trim();
+            if (!url) return;
+            
+            configPanel.classList.remove('show');
+            connectToServer(url);
+        });
+        
+        function connectToServer(url) {
+            status.textContent = '连接中...';
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                status.textContent = '✅ 已连接';
+                inputArea.style.display = 'flex';
+                addMsg('system', '已连接到 DSH 桌面端');
+            };
+            
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'response') {
+                        addMsg('ai', data.content);
+                    } else if (data.type === 'typing') {
+                        showTyping();
+                    }
+                } catch {}
+            };
+            
+            ws.onclose = () => {
+                status.textContent = '❌ 已断开';
+                inputArea.style.display = 'none';
+                addMsg('system', '连接已断开');
+            };
+            
+            ws.onerror = () => {
+                status.textContent = '❌ 连接失败';
+                addMsg('system', '连接失败，请检查地址');
+            };
+        }
+        
+        // 发送消息
+        function sendMsg() {
+            const content = msgInput.value.trim();
+            if (!content || !ws || ws.readyState !== 1) return;
+            
+            addMsg('user', content);
+            msgInput.value = '';
+            msgInput.style.height = 'auto';
+            
+            ws.send(JSON.stringify({ type: 'message', content }));
+        }
+        
+        sendBtn.addEventListener('click', sendMsg);
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMsg();
+            }
+        });
+        
+        // 自动调整输入框高度
+        msgInput.addEventListener('input', () => {
+            msgInput.style.height = 'auto';
+            msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+        });
+        
+        function addMsg(type, content) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + type;
+            div.textContent = content;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+        
+        function showTyping() {
+            const div = document.createElement('div');
+            div.className = 'msg ai typing';
+            div.innerHTML = 'AI<span>.</span><span>.</span><span>.</span>';
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+            setTimeout(() => div.remove(), 2000);
+        }
+        
+        function toast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // 自动填充本机 IP
+        document.getElementById('serverUrl').value = 'ws://' + location.hostname + ':3081';
+        
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>

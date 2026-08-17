@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DSH Mobile</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1a;
+            color: #eee;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #1a1a2e;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #0f3460;
+        }
+        .header h1 { font-size: 18px; color: #e94560; }
+        .status { font-size: 12px; }
+        .status.connected { color: #4ecca3; }
+        .status.disconnected { color: #e94560; }
+        
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .msg {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .msg.user { align-self: flex-end; background: #e94560; }
+        .msg.ai { align-self: flex-start; background: #1a1a2e; }
+        .msg.system { align-self: center; color: #666; font-size: 11px; padding: 5px 10px; }
+        
+        .input-area {
+            background: #1a1a2e;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+        }
+        .input-area input {
+            flex: 1;
+            background: #0f0f1a;
+            border: 1px solid #0f3460;
+            color: #eee;
+            padding: 12px 16px;
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+        }
+        .input-area input:focus { border-color: #e94560; }
+        .send-btn {
+            background: #e94560;
+            border: none;
+            color: white;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 75px;
+            right: 20px;
+            width: 52px;
+            height: 52px;
+            background: #e94560;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(233,69,96,0.4);
+            z-index: 50;
+        }
+        .fab.show { display: flex; }
+        
+        .panel {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 30px;
+        }
+        .panel.show { display: flex; }
+        .panel h2 { color: #e94560; margin-bottom: 25px; }
+        .panel input {
+            width: 100%;
+            max-width: 320px;
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            color: #eee;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .panel button {
+            width: 100%;
+            max-width: 320px;
+            background: #4ecca3;
+            border: none;
+            color: #0f0f1a;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .panel .cancel { background: #333; color: #eee; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 DSH Mobile</h1>
+        <div class="status disconnected" id="status">未连接</div>
+    </div>
+    
+    <div class="chat" id="chat">
+        <div class="msg system">点击 ⚙️ 配置连接</div>
+    </div>
+    
+    <div class="fab" id="fab">⚙️</div>
+    
+    <div class="input-area" id="inputArea" style="display:none;">
+        <input type="text" id="msgInput" placeholder="输入消息..." autocomplete="off">
+        <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+    
+    <div class="panel" id="configPanel">
+        <h2>连接配置</h2>
+        <input type="text" id="serverUrl" value="ws://192.168.1.100:3081">
+        <button id="connectBtn">🔗 连接</button>
+        <button class="cancel" id="cancelBtn">取消</button>
+    </div>
+
+    <script>
+        let ws = null;
+        
+        const chat = document.getElementById('chat');
+        const status = document.getElementById('status');
+        const inputArea = document.getElementById('inputArea');
+        const fab = document.getElementById('fab');
+        const configPanel = document.getElementById('configPanel');
+        const msgInput = document.getElementById('msgInput');
+        
+        fab.addEventListener('click', () => configPanel.classList.add('show'));
+        document.getElementById('cancelBtn').addEventListener('click', () => configPanel.classList.remove('show'));
+        
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            const url = document.getElementById('serverUrl').value.trim();
+            if (url) {
+                configPanel.classList.remove('show');
+                connectToServer(url);
+            }
+        });
+        
+        function connectToServer(url) {
+            status.textContent = '连接中...';
+            status.className = 'status';
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                status.textContent = '已连接';
+                status.className = 'status connected';
+                inputArea.style.display = 'flex';
+                fab.classList.remove('show');
+                addMsg('system', '已连接到 DSH 桌面端');
+            };
+            
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'response') {
+                        addMsg('ai', data.content);
+                    }
+                } catch {}
+            };
+            
+            ws.onclose = () => {
+                status.textContent = '已断开';
+                status.className = 'status disconnected';
+                inputArea.style.display = 'none';
+                fab.classList.add('show');
+                addMsg('system', '连接已断开');
+            };
+            
+            ws.onerror = () => {
+                status.textContent = '连接失败';
+                status.className = 'status disconnected';
+                addMsg('system', '连接失败，请检查地址');
+            };
+        }
+        
+        function sendMessage() {
+            const content = msgInput.value.trim();
+            if (!content || !ws || ws.readyState !== 1) return;
+            
+            addMsg('user', content);
+            msgInput.value = '';
+            ws.send(JSON.stringify({ type: 'message', content }));
+        }
+        
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        function addMsg(type, content) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + type;
+            div.textContent = content;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+        
+        document.getElementById('serverUrl').value = 'ws://' + location.hostname + ':3081';
+    </script>
+</body>
+</html>
